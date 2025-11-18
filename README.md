@@ -16,55 +16,33 @@ Download the package into your ROS workspace.
 
 ```bash
 $ cd ~/catkin_ws/src
-$ git clone https://github.com/jiaweilong66/mycobot_320m5_gazebo.git
+$ git clone https://github.com/jiaweilong66/Mycobot_Pro450.git
 $ cd ~/catkin_ws
 $ catkin_make
 $ source devel/setup.bash
 ```
 
 
-MyCobot_320_m5-Gazebo User Guide
+MyCobot_450_m5-Gazebo User Guide
 1. Slider Control
 The control of the robot arm model's pose in Gazebo through the sliders of joint_state_publisher_gui has now been achieved. Moreover, the pose of the robot arm model in Gazebo and the real robot arm can be controlled simultaneously via the sliders.
 After confirming that the real robot arm is connected to the computer, check the port to which the robot arm is connected: 
 
 ```bash
-ls /dev/tty*
-/dev/ttyACM0 or /dev/ttyUSB0
+my450 = Pro450Client("192.168.0.232", 4500)
 ```
 
 The following output results are obtained: 
 
 ```bash
-/dev/tty    /dev/tty26  /dev/tty44  /dev/tty62      /dev/ttyS20
-/dev/tty0   /dev/tty27  /dev/tty45  /dev/tty63      /dev/ttyS21
-/dev/tty1   /dev/tty28  /dev/tty46  /dev/tty7       /dev/ttyS22
-/dev/tty10  /dev/tty29  /dev/tty47  /dev/tty8       /dev/ttyS23
-/dev/tty11  /dev/tty3   /dev/tty48  /dev/tty9       /dev/ttyS24
-/dev/tty12  /dev/tty30  /dev/tty49  /dev/ttyACM0   (/dev/ttyUSB0)
-/dev/tty13  /dev/tty31  /dev/tty5   /dev/ttyprintk  /dev/ttyS26
-/dev/tty14  /dev/tty32  /dev/tty50  /dev/ttyS0      /dev/ttyS27
-/dev/tty15  /dev/tty33  /dev/tty51  /dev/ttyS1      /dev/ttyS28
-/dev/tty16  /dev/tty34  /dev/tty52  /dev/ttyS10     /dev/ttyS29
-/dev/tty17  /dev/tty35  /dev/tty53  /dev/ttyS11     /dev/ttyS3
-/dev/tty18  /dev/tty36  /dev/tty54  /dev/ttyS12     /dev/ttyS30
-/dev/tty19  /dev/tty37  /dev/tty55  /dev/ttyS13     /dev/ttyS31
-/dev/tty2   /dev/tty38  /dev/tty56  /dev/ttyS14     /dev/ttyS4
-/dev/tty20  /dev/tty39  /dev/tty57  /dev/ttyS15     /dev/ttyS5
-/dev/tty21  /dev/tty4   /dev/tty58  /dev/ttyS16     /dev/ttyS6
-/dev/tty22  /dev/tty40  /dev/tty59  /dev/ttyS17     /dev/ttyS7
-/dev/tty23  /dev/tty41  /dev/tty6   /dev/ttyS18     /dev/ttyS8
-/dev/tty24  /dev/tty42  /dev/tty60  /dev/ttyS19     /dev/ttyS9
-/dev/tty25  /dev/tty43  /dev/tty61  /dev/ttyS2
 ```
 
 Open communication and Chmod
 
 ```bash
-sudo chmod -R 777 /dev/ttyACM0  or sudo chmod -r 777 /dev/ttyUSB0
-sudo chmod -R 777 mycobot_320m5_gazebo/mycobot_320m5_gripper_gazebo/scripts/follow_display_gazebo.py
-sudo chmod -R 777 mycobot_320m5_gazebo/mycobot_320m5_gripper_gazebo/scripts/slider_control_gazebo.py
-sudo chmod -R 777 mycobot_320m5_gazebo/mycobot_320m5_gripper_gazebo/scripts/teleop_keyboard_gazebo.py
+sudo chmod -R 777 mycobotPro450//scripts/follow_display_gazebo.py
+sudo chmod -R 777 mycobotPro450/mycobotPro450/scripts/slider_control_gazebo.py
+sudo chmod -R 777 mycobotPro450/mycobotPro450/scripts/teleop_keyboard_gazebo.py
 roscore
 ```
 
@@ -72,7 +50,7 @@ After confirming the port, open a terminal and enter the following command. Note
 
 ```bash
 source devel/setup.bash
-roslaunch mycobot_320m5_gripper_gazebo slider.launch _port:=/dev/ttyACM0 _baud:=115200
+roslaunch mycobotPro450 slider.launch _port:=/dev/ttyACM0 _baud:=115200
 ```
 
 
@@ -80,7 +58,7 @@ Then open another terminal and enter the following command:
 
 ```bash
 source devel/setup.bash
-rosrun mycobot_320m5_gripper_gazebo slider_control_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
+rosrun mycobotPro450 slider_control_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
 ```
 
 
@@ -99,7 +77,7 @@ The following command can be used to make the model in Gazebo change its pose in
 
 ```bash
 source devel/setup.bash
-roslaunch mycobot_320m5_gripper_gazebo follower.launch _port:=/dev/ttyACM0
+roslaunch mycobotPro450 follower.launch _port:=/dev/ttyACM0
 ```
 
 
@@ -107,7 +85,7 @@ If the program runs successfully, the Gazebo interface will successfully load th
 
 ```bash
 source devel/setup.bash
-rosrun mycobot_320m5_gripper_gazebo follow_display_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
+rosrun mycobotPro450 follow_display_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
 ```
 
 
@@ -118,7 +96,7 @@ We can also use keyboard input to simultaneously control the pose of the robotic
 
 ```bash
 source devel/setup.bash
-roslaunch mycobot_320m5_gripper_gazebo follower.launch _port:=/dev/ttyACM0 _baud:=115200
+roslaunch mycobotPro450 follower.launch _port:=/dev/ttyACM0 _baud:=115200
 ```
 
 
@@ -126,14 +104,14 @@ As in the previous part, we will see the robotic arm model loaded into Gazebo, a
 
 ```bash
 source devel/setup.bash
-rosrun mycobot_320m5_gripper_gazebo teleop_keyboard_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
+rosrun mycobotPro450 teleop_keyboard_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
 ```
 
 
 If the operation is successful, we will see the following output information in the terminal: 
 
 ```shell
-Mycobot_320m5_gripper_gazebo Teleop Keyboard Controller
+mycobotPro450 Teleop Keyboard Controller
 ---------------------------
 Movimg options (control the angle of each joint):
 w: joint2_to_joint1++   s: joint2_to_joint1--
@@ -157,6 +135,7 @@ Please go to [here](./READMECN.md).
 
 ![jaywcjlove/sb](https://jaywcjlove.github.io/sb/lang/chinese.svg)   ![jaywcjlove/sb](https://jaywcjlove.github.io/sb/lang/english.svg)
 
-[MyCobot 320m5gazebo中文操作](./READMECN.md)
+[MyCobot 450m5gazebo中文操作](./READMECN.md)
+
 
 
