@@ -27,14 +27,14 @@ pip install pymycobot --user
 ```bash
 
 $ cd ~/catkin_ws/src
-$ git clone https://github.com/jiaweilong66/mycobot_320m5_gazebo.git
+$ git clone https://github.com/jiaweilong66/mycobot_450m5_gazebo.git
 $ cd ~/catkin_ws
 $ catkin_make
 $ source devel/setup.bash
 
 ```
 
-MyCobot_320_m5-Gazebo使用说明
+MyCobot_450_m5-Gazebo使用说明
 
 1. 滑块控制
 
@@ -46,62 +46,7 @@ MyCobot_320_m5-Gazebo使用说明
 
 ```bash
 
-ls /dev/tty*
-/dev/ttyACM0 or /dev/ttyUSB0
-
 ```
-
-
-
-得到如下的输出结果：
-
-
-
-```bash
-
-/dev/tty    /dev/tty26  /dev/tty44  /dev/tty62      /dev/ttyS20
-
-/dev/tty0   /dev/tty27  /dev/tty45  /dev/tty63      /dev/ttyS21
-
-/dev/tty1   /dev/tty28  /dev/tty46  /dev/tty7       /dev/ttyS22
-
-/dev/tty10  /dev/tty29  /dev/tty47  /dev/tty8       /dev/ttyS23
-
-/dev/tty11  /dev/tty3   /dev/tty48  /dev/tty9       /dev/ttyS24
-
-/dev/tty12  /dev/tty30  /dev/tty49  /dev/ttyACM0   (/dev/ttyUSB0)
-
-/dev/tty13  /dev/tty31  /dev/tty5   /dev/ttyprintk  /dev/ttyS26
-
-/dev/tty14  /dev/tty32  /dev/tty50  /dev/ttyS0      /dev/ttyS27
-
-/dev/tty15  /dev/tty33  /dev/tty51  /dev/ttyS1      /dev/ttyS28
-
-/dev/tty16  /dev/tty34  /dev/tty52  /dev/ttyS10     /dev/ttyS29
-
-/dev/tty17  /dev/tty35  /dev/tty53  /dev/ttyS11     /dev/ttyS3
-
-/dev/tty18  /dev/tty36  /dev/tty54  /dev/ttyS12     /dev/ttyS30
-
-/dev/tty19  /dev/tty37  /dev/tty55  /dev/ttyS13     /dev/ttyS31
-
-/dev/tty2   /dev/tty38  /dev/tty56  /dev/ttyS14     /dev/ttyS4
-
-/dev/tty20  /dev/tty39  /dev/tty57  /dev/ttyS15     /dev/ttyS5
-
-/dev/tty21  /dev/tty4   /dev/tty58  /dev/ttyS16     /dev/ttyS6
-
-/dev/tty22  /dev/tty40  /dev/tty59  /dev/ttyS17     /dev/ttyS7
-
-/dev/tty23  /dev/tty41  /dev/tty6   /dev/ttyS18     /dev/ttyS8
-
-/dev/tty24  /dev/tty42  /dev/tty60  /dev/ttyS19     /dev/ttyS9
-
-/dev/tty25  /dev/tty43  /dev/tty61  /dev/ttyS2
-
-```
-
-
 
 打开通信，给脚本添加执行权限
 
@@ -109,10 +54,9 @@ ls /dev/tty*
 
 ```bash
 
-sudo chmod -R 777 /dev/ttyACM0  or sudo chmod -r 777 /dev/ttyUSB0
-sudo chmod -R 777 mycobot_320m5_gazebo/mycobot_320m5_gripper_gazebo/scripts/follow_display_gazebo.py
-sudo chmod -R 777 mycobot_320m5_gazebo/mycobot_320m5_gripper_gazebo/scripts/slider_control_gazebo.py
-sudo chmod -R 777 mycobot_320m5_gazebo/mycobot_320m5_gripper_gazebo/scripts/teleop_keyboard_gazebo.py
+sudo chmod -R 777 mycobotPro450//scripts/follow_display_gazebo.py
+sudo chmod -R 777 mycobotPro450/mycobotPro450/scripts/slider_control_gazebo.py
+sudo chmod -R 777 mycobotPro450/mycobotPro450/scripts/teleop_keyboard_gazebo.py
 
 roscor
 
@@ -127,7 +71,7 @@ roscor
 ```bash
 
 source devel/setup.bash
-roslaunch mycobot_320m5_gripper_gazebo slider.launch _port:=/dev/ttyACM0 _baud:=115200
+roslaunch mycobotPro450 slider.launch _port:=/dev/ttyACM0 _baud:=115200
 
 ```
 
@@ -140,7 +84,7 @@ roslaunch mycobot_320m5_gripper_gazebo slider.launch _port:=/dev/ttyACM0 _baud:=
 ```bash
 
 source devel/setup.bash
-rosrun mycobot_320m5_gripper_gazebo slider_control_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
+rosrun mycobotPro450 slider_control_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
 
 ```
 
@@ -173,7 +117,7 @@ spin ...
 ```bash
 
 source devel/setup.bash
-roslaunch mycobot_320m5_gripper_gazebo follower.launch _port:=/dev/ttyACM0
+roslaunch mycobotPro450 follower.launch _port:=/dev/ttyACM0
 
 ```
 
@@ -186,7 +130,7 @@ roslaunch mycobot_320m5_gripper_gazebo follower.launch _port:=/dev/ttyACM0
 ```bash
 
 source devel/setup.bash
-rosrun mycobot_320m5_gripper_gazebo follow_display_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
+rosrun mycobotPro450 follow_display_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
 
 ```
 
@@ -205,7 +149,7 @@ rosrun mycobot_320m5_gripper_gazebo follow_display_gazebo.py _port:=/dev/ttyACM0
 ```bash
 
 source devel/setup.bash
-roslaunch mycobot_320m5_gripper_gazebo follower.launch _port:=/dev/ttyACM0 _baud:=115200
+roslaunch mycobotPro450 follower.launch _port:=/dev/ttyACM0 _baud:=115200
 
 ```
 
@@ -218,7 +162,7 @@ roslaunch mycobot_320m5_gripper_gazebo follower.launch _port:=/dev/ttyACM0 _baud
 ```bash
 
 source devel/setup.bash
-rosrun mycobot_320m5_gripper_gazebo teleop_keyboard_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
+rosrun mycobotPro450 teleop_keyboard_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
 
 ```
 
@@ -230,12 +174,9 @@ rosrun mycobot_320m5_gripper_gazebo teleop_keyboard_gazebo.py _port:=/dev/ttyACM
 
 ```shell
 
-Mycobot_320m5_gripper_gazebo Teleop Keyboard Controller
-
+mycobotPro450 Teleop Keyboard Controller
 ---------------------------
-
 Movimg options (control the angle of each joint):
-
 w: joint2_to_joint1++   s: joint2_to_joint1--
 e: joint3_to_joint2++   d: joint3_to_joint2--
 r: joint4_to_joint3++   f: joint4_to_joint3--
@@ -243,11 +184,8 @@ t: joint5_to_joint4++   g: joint5_to_joint4--
 y: joint6_to_joint5++   h: joint6_to_joint5--
 u: joint6output_to_joint6++ j: joint6output_to_joint6--
 o:open gripper          p:close gripper
-
 Other:
-
 1 - Go to home pose
-
 q - Quit
 
 ```
@@ -255,6 +193,7 @@ q - Quit
 
 
 根据上面的提示我们可以知道如何操控机械臂运动了，这里我设置每点击一下机械臂与Gazebo中的机械臂模型会运动1角度，可以尝试长按上述键位中的其中一个键来到达某一位姿。
+
 
 
 
