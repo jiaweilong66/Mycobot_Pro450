@@ -41,7 +41,7 @@ Open communication and Chmod
 
 ```bash
 sudo chmod -R 777 mycobotPro450//scripts/follow_display_gazebo.py
-sudo chmod -R 777 mycobotPro450/mycobotPro450/scripts/slider_control_gazebo.py
+sudo chmod -R 777 mycobotPro450/mycobotPro450/scripts/slider_control.py
 sudo chmod -R 777 mycobotPro450/mycobotPro450/scripts/teleop_keyboard_gazebo.py
 roscore
 ```
@@ -58,7 +58,7 @@ Then open another terminal and enter the following command:
 
 ```bash
 source devel/setup.bash
-rosrun mycobotPro450 slider_control_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
+rosrun mycobotPro450 slider_control.py _port:=/dev/ttyACM0 _baud:=115200
 ```
 
 
@@ -136,6 +136,7 @@ Please go to [here](./READMECN.md).
 ![jaywcjlove/sb](https://jaywcjlove.github.io/sb/lang/chinese.svg)   ![jaywcjlove/sb](https://jaywcjlove.github.io/sb/lang/english.svg)
 
 [MyCobot 450m5gazebo中文操作](./READMECN.md)
+
 
 
 
