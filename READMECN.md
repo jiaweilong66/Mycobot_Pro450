@@ -27,7 +27,7 @@ pip install pymycobot --user
 ```bash
 
 $ cd ~/catkin_ws/src
-$ git clone https://github.com/jiaweilong66/mycobot_450m5_gazebo.git
+$ git clone https://github.com/jiaweilong66/Mycobot_Pro450.git
 $ cd ~/catkin_ws
 $ catkin_make
 $ source devel/setup.bash
@@ -54,9 +54,9 @@ MyCobot_450_m5-Gazebo使用说明
 
 ```bash
 
-sudo chmod -R 777 mycobotPro450//scripts/follow_display_gazebo.py
-sudo chmod -R 777 mycobotPro450/mycobotPro450/scripts/slider_control.py
-sudo chmod -R 777 mycobotPro450/mycobotPro450/scripts/teleop_keyboard_gazebo.py
+sudo chmod -R 777 Mycobot_Pro450/mycobotPro450/scripts/follow_display_gazebo.py
+sudo chmod -R 777 Mycobot_Pro450/mycobotPro450/scripts/slider_control.py
+sudo chmod -R 777 Mycobot_Pro450/mycobotPro450/scripts/teleop_keyboard_gazebo.py
 
 roscor
 
@@ -71,7 +71,7 @@ roscor
 ```bash
 
 source devel/setup.bash
-roslaunch mycobotPro450 slider.launch _port:=/dev/ttyACM0 _baud:=115200
+roslaunch mycobotPro450 slider.launch
 
 ```
 
@@ -84,7 +84,7 @@ roslaunch mycobotPro450 slider.launch _port:=/dev/ttyACM0 _baud:=115200
 ```bash
 
 source devel/setup.bash
-rosrun mycobotPro450 slider_control.py _port:=/dev/ttyACM0 _baud:=115200
+rosrun  mycobotPro450 slider_control.py
 
 ```
 
@@ -117,7 +117,7 @@ spin ...
 ```bash
 
 source devel/setup.bash
-roslaunch mycobotPro450 follower.launch _port:=/dev/ttyACM0
+roslaunch  mycobotPro450 follower.launch 
 
 ```
 
@@ -130,7 +130,7 @@ roslaunch mycobotPro450 follower.launch _port:=/dev/ttyACM0
 ```bash
 
 source devel/setup.bash
-rosrun mycobotPro450 follow_display_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
+rosrun  mycobotPro450 follow_display_gazebo.py 
 
 ```
 
@@ -149,7 +149,7 @@ rosrun mycobotPro450 follow_display_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
 ```bash
 
 source devel/setup.bash
-roslaunch mycobotPro450 follower.launch _port:=/dev/ttyACM0 _baud:=115200
+roslaunch  mycobotPro450 follower.launch 
 
 ```
 
@@ -162,7 +162,7 @@ roslaunch mycobotPro450 follower.launch _port:=/dev/ttyACM0 _baud:=115200
 ```bash
 
 source devel/setup.bash
-rosrun mycobotPro450 teleop_keyboard_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
+rosrun  mycobotPro450 teleop_keyboard_gazebo.py 
 
 ```
 
@@ -174,7 +174,7 @@ rosrun mycobotPro450 teleop_keyboard_gazebo.py _port:=/dev/ttyACM0 _baud:=115200
 
 ```shell
 
-mycobotPro450 Teleop Keyboard Controller
+Mycobot_Pro450 Teleop Keyboard Controller
 ---------------------------
 Movimg options (control the angle of each joint):
 w: joint2_to_joint1++   s: joint2_to_joint1--
@@ -193,6 +193,7 @@ q - Quit
 
 
 根据上面的提示我们可以知道如何操控机械臂运动了，这里我设置每点击一下机械臂与Gazebo中的机械臂模型会运动1角度，可以尝试长按上述键位中的其中一个键来到达某一位姿。
+
 
 
 
