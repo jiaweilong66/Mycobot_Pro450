@@ -110,7 +110,7 @@ spin ...
 ```bash
 
 source devel/setup.bash
-roslaunch  mycobotpro450 follower.launch 
+roslaunch  mycobotpro450 follow.launch 
 
 ```
 
@@ -142,7 +142,7 @@ rosrun  mycobotpro450 follow_display_gazebo.py
 ```bash
 
 source devel/setup.bash
-roslaunch  mycobotpro450 follower.launch 
+roslaunch  mycobotpro450 teleop_keyboard.launch 
 
 ```
 
@@ -186,6 +186,7 @@ q - Quit
 
 
 根据上面的提示我们可以知道如何操控机械臂运动了，这里我设置每点击一下机械臂与Gazebo中的机械臂模型会运动1角度，可以尝试长按上述键位中的其中一个键来到达某一位姿。
+
 
 
 
