@@ -48,7 +48,7 @@ MyCobot_450_m5-Gazebo使用说明
 ```bash
 
 sudo chmod -R 777 Mycobot_Pro450/mycobotpro450/scripts/follow_display_gazebo.py
-sudo chmod -R 777 Mycobot_Pro450/mycobotpro450/scripts/slider_control.py
+sudo chmod -R 777 Mycobot_Pro450/mycobotpro450/scripts/slider_control_gazebo.py
 sudo chmod -R 777 Mycobot_Pro450/mycobotpro450/scripts/teleop_keyboard_gazebo.py
 
 roscor
@@ -77,7 +77,7 @@ roslaunch mycobotpro450 slider.launch
 ```bash
 
 source devel/setup.bash
-rosrun  mycobotpro450 slider_control.py
+rosrun  mycobotpro450 slider_control_gazebo.py
 
 ```
 
@@ -186,6 +186,7 @@ q - Quit
 
 
 根据上面的提示我们可以知道如何操控机械臂运动了，这里我设置每点击一下机械臂与Gazebo中的机械臂模型会运动1角度，可以尝试长按上述键位中的其中一个键来到达某一位姿。
+
 
 
 
