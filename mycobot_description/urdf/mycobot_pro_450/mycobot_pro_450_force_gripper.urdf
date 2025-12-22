@@ -156,9 +156,9 @@
         </visual>
         <collision>
             <geometry>
-                <mesh filename="package://mycobot_description/urdf/mycobot_320_m5_2022/force_control_gripper/mygripper_f100_connection.dae" />
+                <box size="0.05 0.05 0.03" />
             </geometry>
-            <origin xyz="-0.03 0.014 0" rpy="0 0 -1.5708" />
+            <origin xyz="0 0 0" rpy="0 0 0" />
         </collision>
         <selfCollide>true</selfCollide>
         <inertial>
@@ -175,9 +175,9 @@
         </visual>
         <collision>
             <geometry>
-                <mesh filename="package://mycobot_description/urdf/mycobot_320_m5_2022/force_control_gripper/pro_gripper_base.dae" />
+                <box size="0.10 0.05 0.035" />
             </geometry>
-            <origin xyz="-0.107 0.012 0.0" rpy="1.5708 0 1.5708" />
+            <origin xyz="0 0.02 -0.015" rpy="0 0 0" />
         </collision>
         <inertial>
             <mass value="0.05" />
@@ -196,9 +196,9 @@
         </visual>
         <collision>
             <geometry>
-                <mesh filename="package://mycobot_description/urdf/mycobot_320_m5_2022/force_control_gripper/pro_gripper_left1.dae" />
+                <box size="0.02 0.02 0.055" />
             </geometry>
-            <origin xyz="-0.047 -0.013 0.044" rpy="1.5708 0 1.5708" />
+            <origin xyz="0 0.025 0" rpy="0 0 0" />
         </collision>
         <inertial>
             <mass value="0.005" />
@@ -216,9 +216,9 @@
         </visual>
         <collision>
             <geometry>
-                <mesh filename="package://mycobot_description/urdf/mycobot_320_m5_2022/force_control_gripper/pro_gripper_left2.dae" />
+                <box size="0.02 0.055 0.02" />
             </geometry>
-            <origin xyz="-0.0 0.03 0.004" rpy="3.14159 0 1.5708" />
+            <origin xyz="0 0.025 0" rpy="0 0 0" />
         </collision>
         <inertial>
             <mass value="0.005" />
@@ -237,9 +237,9 @@
         </visual>
         <collision>
             <geometry>
-                <mesh filename="package://mycobot_description/urdf/mycobot_320_m5_2022/force_control_gripper/pro_gripper_left3.dae" />
+                <box size="0.02 0.055 0.02" />
             </geometry>
-            <origin xyz="0 -0.03 0.012" rpy="1.5708 3.14159 1.5708" />
+            <origin xyz="0 0.025 0" rpy="0 0 0" />
         </collision>
         <inertial>
             <mass value="0.005" />
@@ -258,9 +258,9 @@
         </visual>
         <collision>
             <geometry>
-                <mesh filename="package://mycobot_description/urdf/mycobot_320_m5_2022/force_control_gripper/pro_gripper_right1.dae" />
+                <box size="0.02 0.02 0.055" />
             </geometry>
-            <origin xyz="0.047 -0.013 -0.046" rpy="1.5708 3.14 -1.5708" />
+            <origin xyz="0 0.025 0" rpy="0 0 0" />
         </collision>
         <inertial>
             <mass value="0.005" />
@@ -279,9 +279,9 @@
         </visual>
         <collision>
             <geometry>
-                <mesh filename="package://mycobot_description/urdf/mycobot_320_m5_2022/force_control_gripper/pro_gripper_right2.dae" />
+                <box size="0.02 0.055 0.02" />
             </geometry>
-            <origin xyz="0 0.03 -0.005" rpy="0 0 1.5708" />
+            <origin xyz="0 0.025 0" rpy="0 0 0" />
         </collision>
         <inertial>
             <mass value="0.005" />
@@ -300,9 +300,9 @@
         </visual>
         <collision>
             <geometry>
-                <mesh filename="package://mycobot_description/urdf/mycobot_320_m5_2022/force_control_gripper/pro_gripper_right3.dae" />
+                <box size="0.02 0.055 0.02" />
             </geometry>
-            <origin xyz="-0.014 -0.029 0.004" rpy="3.14 0 -1.5708" />
+            <origin xyz="0 0.025 0" rpy="0 0 0" />
         </collision>
         <inertial>
             <mass value="0.005" />
@@ -547,4 +547,3 @@
         <selfCollide>true</selfCollide>
     </gazebo>
 </robot>
-
