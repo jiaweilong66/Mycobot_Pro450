@@ -6,6 +6,7 @@ slider_control_450.py
   1: 滑块 -> Gazebo 控制器  
   2: 滑块 -> 真实 MyCobot Pro 450 机械臂
 使用异步执行和频率控制优化性能，减少卡顿
+集成MoveIt碰撞检测，确保运动安全
 """
 import time
 import math
@@ -16,11 +17,28 @@ from sensor_msgs.msg import JointState
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from pymycobot import Pro450Client
 
+# MoveIt碰撞检测相关导入
+try:
+    import moveit_commander
+    from moveit_msgs.msg import RobotState, PlanningScene
+    from moveit_msgs.srv import GetStateValidity, GetStateValidityRequest
+    MOVEIT_AVAILABLE = True
+except ImportError:
+    MOVEIT_AVAILABLE = False
+    rospy.logwarn("[slider_control] MoveIt未安装，将使用基础碰撞检测")
+
 # 全局变量
 mc = None
 mode = 2
 pub_arm = None
 pub_gripper = None
+
+# MoveIt碰撞检测相关全局变量
+robot_commander = None
+move_group = None
+planning_scene_interface = None
+state_validity_service = None
+MOVEIT_COLLISION_CHECK = False  # 是否启用MoveIt碰撞检测
 
 # 优化参数
 ANGLE_THRESHOLD = 3.0           # 角度变化阈值(度)
@@ -127,6 +145,17 @@ COLLISION_CHECK_ENABLED = True
 last_collision_warning_time = 0
 COLLISION_WARNING_INTERVAL = 2.0  # 碰撞警告间隔(秒)
 
+# MoveIt碰撞检测配置
+MOVEIT_GROUP_NAME = "arm"  # MoveIt规划组名称
+GROUND_COLLISION_HEIGHT = 0.0  # 地面高度(m)，低于此高度视为碰撞
+
+# 夹爪末端link名称（用于地面碰撞检测）
+GRIPPER_TIP_LINKS = [
+    "gripper_left1", "gripper_left2", "gripper_left3",
+    "gripper_right1", "gripper_right2", "gripper_right3",
+    "gripper_base", "gripper_connection"
+]
+
 # Pro450 实际关节限制（根据更新后的URDF 2024.12）
 PRO450_JOINT_LIMITS = [
     (-162, 162),  # joint1 (±2.8274 rad)
@@ -194,10 +223,218 @@ def estimate_end_effector_distance_to_base(j2, j3, j4):
     
     return distance
 
+# ========================= MoveIt碰撞检测 =========================
+def initialize_moveit_collision_checker():
+    """初始化MoveIt碰撞检测"""
+    global robot_commander, move_group, planning_scene_interface, state_validity_service, MOVEIT_COLLISION_CHECK
+    
+    if not MOVEIT_AVAILABLE:
+        rospy.logwarn("[碰撞检测] MoveIt不可用，使用基础碰撞检测")
+        return False
+    
+    try:
+        rospy.loginfo("[碰撞检测] 正在初始化MoveIt碰撞检测...")
+        
+        # 初始化moveit_commander
+        moveit_commander.roscpp_initialize([])
+        
+        # 创建RobotCommander对象
+        robot_commander = moveit_commander.RobotCommander()
+        
+        # 创建MoveGroupCommander对象
+        move_group = moveit_commander.MoveGroupCommander(MOVEIT_GROUP_NAME)
+        
+        # 创建PlanningSceneInterface对象
+        planning_scene_interface = moveit_commander.PlanningSceneInterface()
+        
+        # 等待状态有效性服务
+        rospy.loginfo("[碰撞检测] 等待 /check_state_validity 服务...")
+        try:
+            rospy.wait_for_service('/check_state_validity', timeout=5.0)
+            state_validity_service = rospy.ServiceProxy('/check_state_validity', GetStateValidity)
+            rospy.loginfo("[碰撞检测] ✅ 状态有效性服务已连接")
+        except rospy.ROSException:
+            rospy.logwarn("[碰撞检测] /check_state_validity 服务不可用，将使用基础检测")
+            state_validity_service = None
+        
+        # 添加地面碰撞对象
+        add_ground_collision_object()
+        
+        MOVEIT_COLLISION_CHECK = True
+        rospy.loginfo("[碰撞检测] ✅ MoveIt碰撞检测初始化成功")
+        rospy.loginfo(f"[碰撞检测]    规划组: {MOVEIT_GROUP_NAME}")
+        rospy.loginfo(f"[碰撞检测]    末端执行器: {move_group.get_end_effector_link()}")
+        
+        return True
+        
+    except Exception as e:
+        rospy.logwarn(f"[碰撞检测] MoveIt初始化失败: {e}")
+        rospy.logwarn("[碰撞检测] 将使用基础碰撞检测")
+        MOVEIT_COLLISION_CHECK = False
+        return False
+
+def add_ground_collision_object():
+    """添加地面碰撞对象到规划场景"""
+    global planning_scene_interface
+    
+    if planning_scene_interface is None:
+        return
+    
+    try:
+        from geometry_msgs.msg import PoseStamped
+        
+        # 创建地面平面
+        ground_pose = PoseStamped()
+        ground_pose.header.frame_id = "world"
+        ground_pose.pose.position.x = 0.0
+        ground_pose.pose.position.y = 0.0
+        ground_pose.pose.position.z = -0.01  # 地面略低于0
+        ground_pose.pose.orientation.w = 1.0
+        
+        # 添加一个大的盒子作为地面
+        planning_scene_interface.add_box(
+            "ground_plane",
+            ground_pose,
+            size=(3.0, 3.0, 0.02)  # 3m x 3m x 2cm 的地面
+        )
+        
+        rospy.loginfo("[碰撞检测] ✅ 已添加地面碰撞对象")
+        
+    except Exception as e:
+        rospy.logwarn(f"[碰撞检测] 添加地面碰撞对象失败: {e}")
+
+def check_moveit_collision(angles):
+    """
+    使用MoveIt检查关节角度是否会导致碰撞
+    
+    参数:
+        angles: 6个关节角度(度)
+    
+    返回:
+        (is_safe, collision_info): 是否安全，碰撞信息
+    """
+    global robot_commander, move_group, state_validity_service
+    
+    if not MOVEIT_COLLISION_CHECK or move_group is None:
+        return True, ""
+    
+    try:
+        # 将角度转换为弧度
+        joint_positions = [math.radians(a) for a in angles]
+        
+        # 方法1: 使用状态有效性服务（更准确）
+        if state_validity_service is not None:
+            return check_state_validity_service(joint_positions)
+        
+        # 方法2: 使用MoveGroup的碰撞检测
+        return check_moveit_group_collision(joint_positions)
+        
+    except Exception as e:
+        rospy.logdebug(f"[碰撞检测] MoveIt检测异常: {e}")
+        return True, ""  # 异常时允许通过，由基础检测兜底
+
+def check_state_validity_service(joint_positions):
+    """使用/check_state_validity服务检查碰撞"""
+    global robot_commander, state_validity_service
+    
+    try:
+        # 创建RobotState消息
+        robot_state = RobotState()
+        robot_state.joint_state.name = ARM_JOINTS
+        robot_state.joint_state.position = joint_positions
+        
+        # 创建请求
+        request = GetStateValidityRequest()
+        request.robot_state = robot_state
+        request.group_name = MOVEIT_GROUP_NAME
+        
+        # 调用服务
+        response = state_validity_service(request)
+        
+        if not response.valid:
+            # 解析碰撞信息
+            collision_pairs = []
+            for contact in response.contacts:
+                pair = f"{contact.contact_body_1} <-> {contact.contact_body_2}"
+                if pair not in collision_pairs:
+                    collision_pairs.append(pair)
+            
+            collision_info = ", ".join(collision_pairs[:3])  # 最多显示3对
+            return False, f"碰撞: {collision_info}"
+        
+        return True, ""
+        
+    except Exception as e:
+        rospy.logdebug(f"[碰撞检测] 服务调用失败: {e}")
+        return True, ""
+
+def check_moveit_group_collision(joint_positions):
+    """使用MoveGroup检查碰撞"""
+    global move_group
+    
+    try:
+        # 获取当前状态
+        current_state = move_group.get_current_state()
+        
+        # 设置关节值
+        joint_state = current_state.joint_state
+        for i, joint_name in enumerate(ARM_JOINTS):
+            if joint_name in joint_state.name:
+                idx = joint_state.name.index(joint_name)
+                joint_state.position = list(joint_state.position)
+                joint_state.position[idx] = joint_positions[i]
+        
+        # 检查是否在关节限制内
+        # MoveIt会自动检查碰撞
+        move_group.set_joint_value_target(joint_positions)
+        
+        # 尝试规划（不执行）来检测碰撞
+        plan = move_group.plan()
+        
+        # 清除目标
+        move_group.clear_pose_targets()
+        
+        # 检查规划是否成功
+        if isinstance(plan, tuple):
+            success = plan[0]
+        else:
+            success = plan is not None
+        
+        if not success:
+            return False, "MoveIt规划失败(可能碰撞)"
+        
+        return True, ""
+        
+    except Exception as e:
+        rospy.logdebug(f"[碰撞检测] MoveGroup检测失败: {e}")
+        return True, ""
+
+def check_gripper_ground_collision(angles):
+    """
+    检查夹爪是否会与地面碰撞
+    
+    使用正向运动学估算夹爪末端位置，检查是否低于地面
+    """
+    j1, j2, j3, j4, j5, j6 = angles
+    
+    # 估算末端高度
+    end_height = estimate_end_effector_height(j2, j3, j4)
+    
+    # 检查是否低于地面安全高度
+    if end_height < MIN_END_HEIGHT:
+        return False, f"夹爪过低: {end_height*100:.0f}cm (最小: {MIN_END_HEIGHT*100:.0f}cm)"
+    
+    return True, ""
+
 def check_collision(angles):
     """
     检查关节角度组合是否可能导致碰撞
     返回: (is_safe, warning_message)
+    
+    碰撞检测策略:
+    1. MoveIt碰撞检测（如果可用）- 检测自碰撞和环境碰撞
+    2. 夹爪地面碰撞检测 - 确保夹爪不会撞地
+    3. 基础规则检测 - 作为兜底保护
     
     Pro450 碰撞风险区域（针对17cm夹爪优化）：
     1. 末端撞地：当末端高度低于安全高度时
@@ -212,6 +449,17 @@ def check_collision(angles):
     
     j1, j2, j3, j4, j5, j6 = angles
     warnings = []
+    
+    # ===== MoveIt碰撞检测（优先级最高）=====
+    if MOVEIT_COLLISION_CHECK:
+        moveit_safe, moveit_info = check_moveit_collision(angles)
+        if not moveit_safe:
+            warnings.append(f"🚨 MoveIt检测: {moveit_info}")
+    
+    # ===== 夹爪地面碰撞检测 =====
+    gripper_safe, gripper_info = check_gripper_ground_collision(angles)
+    if not gripper_safe:
+        warnings.append(f"🚨 {gripper_info}")
     
     # ===== 规则0: 检查URDF关节限制 =====
     for i, (angle, (min_lim, max_lim)) in enumerate(zip(angles, PRO450_JOINT_LIMITS)):
@@ -751,7 +999,7 @@ def print_stats():
                       f"效率:{efficiency:.1f}%")
 
 def main():
-    global mc, mode, pub_arm, pub_gripper
+    global mc, mode, pub_arm, pub_gripper, MOVEIT_COLLISION_CHECK
     
     rospy.init_node("slider_control_450", anonymous=True)
     
@@ -775,8 +1023,14 @@ def main():
     rospy.loginfo(f"[slider_control]   配置: 角度阈值={ANGLE_THRESHOLD}°, "
                   f"最大频率={MAX_COMMAND_RATE}Hz, 队列大小={COMMAND_QUEUE_SIZE}")
     rospy.loginfo(f"[slider_control]   安全限制: 关节限制已启用, 夹爪{GRIPPER_LIMITS[0]}°~{GRIPPER_LIMITS[1]}°")
+    
+    # 初始化MoveIt碰撞检测
     if COLLISION_CHECK_ENABLED:
-        rospy.loginfo("[slider_control]   碰撞检测: 已启用 (防止末端撞地/自碰撞)")
+        rospy.loginfo("[slider_control]   正在初始化MoveIt碰撞检测...")
+        if initialize_moveit_collision_checker():
+            rospy.loginfo("[slider_control]   碰撞检测: MoveIt + 基础规则 (双重保护)")
+        else:
+            rospy.loginfo("[slider_control]   碰撞检测: 基础规则 (MoveIt不可用)")
     else:
         rospy.logwarn("[slider_control]   碰撞检测: 已禁用")
     
@@ -807,6 +1061,9 @@ def main():
     rospy.loginfo("[slider_control]    - 请确保已启动 slider.launch 来显示滑块GUI")
     rospy.loginfo("[slider_control]    - 角度超限时会自动限制并显示警告")
     rospy.loginfo("[slider_control]    - 碰撞检测会自动调整危险姿态")
+    if MOVEIT_COLLISION_CHECK:
+        rospy.loginfo("[slider_control]    - MoveIt碰撞检测已启用，检测自碰撞和环境碰撞")
+        rospy.loginfo("[slider_control]    - 地面碰撞对象已添加，夹爪不会撞地")
     if mode == 1:
         rospy.loginfo("[slider_control]    - 模式1: 滑块控制Gazebo仿真机械臂")
     elif mode == 2:
