@@ -13,7 +13,7 @@
   </include>
 
   <!-- Set the robot urdf on the parameter server -->
-  <param name="robot_description" textfile="$(find mycobot_description)/urdf/mycobot_pro_450/mycobot_pro_450_force_gripper.urdf" />
+  <param name="robot_description" textfile="$(find mycobotpro450)/config/mycobot_pro_450_force_gripper.urdf" />
 
   <!-- Unpause the simulation after loading the robot model -->
   <arg name="unpause" value="$(eval '' if arg('paused') else '-unpause')" />
