@@ -14,7 +14,6 @@ import select
 import termios
 import tty
 import threading
-import queue
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from pymycobot import Pro450Client
 
@@ -24,8 +23,7 @@ pub_arm_command = None
 pub_gripper_command = None
 home_pose = [0, 0, 0, 0, 0, 0]
 
-# 命令队列 - 用于异步执行，只保留最新命令
-command_queue = queue.Queue(maxsize=10)
+# 命令执行控制
 executor_running = True
 
 # Pro450 连接参数
@@ -244,87 +242,61 @@ def send_gripper_to_pro450(gripper_angle):
         rospy.logwarn(f"Pro450夹爪发送失败: {e}")
 
 # ========================= 命令队列处理 =========================
-def get_latest_command():
-    """从队列中获取最新命令，丢弃旧命令"""
-    latest_arm = None
-    latest_gripper = None
-    
-    while True:
-        try:
-            cmd = command_queue.get_nowait()
-            if cmd['type'] == 'arm':
-                latest_arm = cmd['data']
-            elif cmd['type'] == 'gripper':
-                latest_gripper = cmd['data']
-        except queue.Empty:
-            break
-    
-    return latest_arm, latest_gripper
+# 使用锁保护最新命令
+command_lock = threading.Lock()
+latest_arm_command = None
+latest_gripper_command = None
+command_event = threading.Event()
 
 def command_executor_thread():
     """命令执行线程 - 只执行最新命令"""
-    global executor_running
+    global executor_running, latest_arm_command, latest_gripper_command
     
     while executor_running and not rospy.is_shutdown():
-        try:
-            # 等待命令
-            try:
-                cmd = command_queue.get(timeout=0.05)
-                # 放回队列，让get_latest_command处理
-                command_queue.put(cmd)
-            except queue.Empty:
-                time.sleep(0.01)
-                continue
-            
-            # 获取最新命令
-            latest_arm, latest_gripper = get_latest_command()
-            
-            # 执行最新的机械臂命令
-            if latest_arm is not None:
-                publish_arm_to_gazebo(latest_arm)
-                if mc is not None:
-                    try:
-                        mc.send_angles(latest_arm, ROBOT_SPEED)
-                    except:
-                        pass
-            
-            # 执行最新的夹爪命令
-            if latest_gripper is not None:
-                publish_gripper_to_gazebo(latest_gripper)
-                if mc is not None:
-                    try:
-                        gripper_angle = max(0, min(100, int(latest_gripper)))
-                        mc.set_pro_gripper_angle(gripper_angle, GRIPPER_ID)
-                    except:
-                        pass
-                        
-        except Exception as e:
-            rospy.logwarn(f"命令执行错误: {e}")
+        # 等待新命令
+        if not command_event.wait(timeout=0.05):
+            continue
+        
+        # 获取并清除最新命令
+        with command_lock:
+            arm_cmd = latest_arm_command
+            gripper_cmd = latest_gripper_command
+            latest_arm_command = None
+            latest_gripper_command = None
+            command_event.clear()
+        
+        # 执行最新的机械臂命令
+        if arm_cmd is not None:
+            publish_arm_to_gazebo(arm_cmd)
+            if mc is not None:
+                try:
+                    mc.send_angles(arm_cmd, ROBOT_SPEED)
+                except:
+                    pass
+        
+        # 执行最新的夹爪命令
+        if gripper_cmd is not None:
+            publish_gripper_to_gazebo(gripper_cmd)
+            if mc is not None:
+                try:
+                    gripper_angle = max(0, min(100, int(gripper_cmd)))
+                    mc.set_pro_gripper_angle(gripper_angle, GRIPPER_ID)
+                except:
+                    pass
 
 def add_arm_command(angles):
-    """添加机械臂命令到队列"""
-    try:
-        command_queue.put_nowait({'type': 'arm', 'data': angles})
-    except queue.Full:
-        # 队列满时，清空旧命令
-        try:
-            while not command_queue.empty():
-                command_queue.get_nowait()
-        except:
-            pass
-        command_queue.put_nowait({'type': 'arm', 'data': angles})
+    """添加机械臂命令 - 直接覆盖旧命令"""
+    global latest_arm_command
+    with command_lock:
+        latest_arm_command = angles[:]
+        command_event.set()
 
 def add_gripper_command(gripper_angle):
-    """添加夹爪命令到队列"""
-    try:
-        command_queue.put_nowait({'type': 'gripper', 'data': gripper_angle})
-    except queue.Full:
-        try:
-            while not command_queue.empty():
-                command_queue.get_nowait()
-        except:
-            pass
-        command_queue.put_nowait({'type': 'gripper', 'data': gripper_angle})
+    """添加夹爪命令 - 直接覆盖旧命令"""
+    global latest_gripper_command
+    with command_lock:
+        latest_gripper_command = gripper_angle
+        command_event.set()
 
 # ========================= 同步控制 =========================
 def sync_arm(angles):
@@ -385,7 +357,6 @@ def print_help():
   │ 1: 回到初始位置 (所有关节0°)                    │
   │ 2: 显示当前角度                                 │
   │ 3: 从真实机械臂读取当前角度                     │
-  │ h: 显示此帮助信息                               │
   └─────────────────────────────────────────────────┘
 
 ❌ 退出:
@@ -452,11 +423,6 @@ def teleop_keyboard():
             if key == 'q':
                 print("\n退出程序...")
                 break
-            
-            # 显示帮助
-            if key == 'h':
-                print_help()
-                continue
             
             # 回到初始位置
             if key == '1':
@@ -580,7 +546,7 @@ def main():
     sync_arm(current_angles)
     sync_gripper(current_gripper_angle)
     
-    print("✨ 准备就绪! 按 'h' 查看帮助，按 'q' 退出\n")
+    print("✨ 准备就绪! 按 'q' 退出\n")
     
     # 注册退出处理
     def cleanup():
