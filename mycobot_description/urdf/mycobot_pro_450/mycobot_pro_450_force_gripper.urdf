@@ -36,13 +36,13 @@
         </visual>
         <collision>
             <geometry>
-                <cylinder length="0.075" radius="0.033" />
+                <cylinder length="0.130" radius="0.033" />
             </geometry>
-            <origin xyz="0.0 0 -0.05" rpy="0 0 1.5708" />
+            <origin xyz="0.0 0 -0.015" rpy="0 0 1.5708" />
         </collision>
         <selfCollide>true</selfCollide>
         <inertial>
-            <mass value="10.0" />
+            <mass value="20.0" />
             <inertia ixx="1" iyy="1" izz="1" ixy="0.0" ixz="0.0" iyz="0.0" />
             <origin xyz="0 0 0" rpy="0 0 0" />
         </inertial>
@@ -62,7 +62,7 @@
         </collision>
         <selfCollide>true</selfCollide>
         <inertial>
-            <mass value="5.0" />
+            <mass value="10.0" />
             <inertia ixx="0.5" iyy="0.5" izz="0.5" ixy="0.0" ixz="0.0" iyz="0.0" />
             <origin xyz="0 0 0" rpy="0 0 0" />
         </inertial>
@@ -82,7 +82,7 @@
         </collision>
         <selfCollide>true</selfCollide>
         <inertial>
-            <mass value="5.0" />
+            <mass value="10.0" />
             <inertia ixx="0.5" iyy="0.5" izz="0.5" ixy="0.0" ixz="0.0" iyz="0.0" />
             <origin xyz="0 0 0" rpy="0 0 0" />
         </inertial>
@@ -102,7 +102,7 @@
         </collision>
         <selfCollide>true</selfCollide>
         <inertial>
-            <mass value="2.0" />
+            <mass value="5.0" />
             <inertia ixx="0.2" iyy="0.2" izz="0.2" ixy="0.0" ixz="0.0" iyz="0.0" />
             <origin xyz="0 0 0" rpy="0 0 0" />
         </inertial>
@@ -122,7 +122,7 @@
         </collision>
         <selfCollide>true</selfCollide>
         <inertial>
-            <mass value="2.0" />
+            <mass value="5.0" />
             <inertia ixx="0.2" iyy="0.2" izz="0.2" ixy="0.0" ixz="0.0" iyz="0.0" />
             <origin xyz="0 0 0" rpy="0 0 0" />
         </inertial>
@@ -142,7 +142,7 @@
         </collision>
         <selfCollide>true</selfCollide>
         <inertial>
-            <mass value="2.0" />
+            <mass value="5.0" />
             <inertia ixx="0.2" iyy="0.2" izz="0.2" ixy="0.0" ixz="0.0" iyz="0.0" />
             <origin xyz="0 0 0" rpy="0 0 0" />
         </inertial>
@@ -162,7 +162,7 @@
         </collision>
         <selfCollide>true</selfCollide>
         <inertial>
-            <mass value="1.0" />
+            <mass value="0.1" />
             <inertia ixx="0.1" iyy="0.1" izz="0.1" ixy="0.0" ixz="0.0" iyz="0.0" />
         </inertial>
     </link>
@@ -180,7 +180,7 @@
             <origin xyz="0 0.02 -0.015" rpy="0 0 0" />
         </collision>
         <inertial>
-            <mass value="0.05" />
+            <mass value="0.005" />
             <origin xyz="0 0 0" rpy="0 0 0" />
             <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
         </inertial>
