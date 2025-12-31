@@ -808,6 +808,26 @@ def command_executor():
             try:
                 # 执行最新的角度命令
                 if latest_angles_cmd is not None:
+                    # 检查新角度是否会导致末端高度过低
+                    try:
+                        new_angles = latest_angles_cmd.data
+                        j2, j3, j4 = new_angles[1], new_angles[2], new_angles[3]
+                        
+                        # 使用正向运动学预算新角度的末端高度
+                        predicted_height = estimate_end_effector_height(j2, j3, j4)
+                        MIN_SAFE_HEIGHT = 0.17  # 最小安全高度 170mm = 0.17m
+                        
+                        if predicted_height < MIN_SAFE_HEIGHT:
+                            rospy.logwarn(f"[slider_control] 🚨 预测末端高度过低: {predicted_height*1000:.0f}mm < {MIN_SAFE_HEIGHT*1000:.0f}mm")
+                            rospy.logwarn(f"[slider_control] ⚠️  夹爪会与地面发生碰撞！拒绝执行此命令")
+                            rospy.logwarn(f"[slider_control] 📍 新角度: j2={j2:.1f}°, j3={j3:.1f}°, j4={j4:.1f}°")
+                            stats['commands_skipped'] += 1
+                            continue  # 跳过此命令，不发送到机械臂
+                        else:
+                            rospy.logdebug(f"[slider_control] 预测末端高度: {predicted_height*1000:.0f}mm (安全)")
+                    except Exception as e:
+                        rospy.logwarn(f"[slider_control] 高度检测异常: {e}，继续执行")
+                    
                     rospy.loginfo(f"[slider_control]  发送角度到Pro450: {[round(a,1) for a in latest_angles_cmd.data]}")
                     mc.send_angles(latest_angles_cmd.data, 10)  # 提高速度到50
                     last_angles = latest_angles_cmd.data.copy()
