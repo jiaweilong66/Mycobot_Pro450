@@ -74,6 +74,8 @@ roslaunch mycobotpro450 slider.launch
 source devel/setup.bash
 rosrun mycobotpro450 coords_broadcaster.py
 
+```
+
 接着打开另外一个终端，输入如下命令：
 
 ```bash
@@ -181,6 +183,7 @@ rosrun  mycobotpro450 teleop_keyboard_gazebo.py
 
 
 根据上面的提示我们可以知道如何操控机械臂运动了，这里我设置每点击一下机械臂与Gazebo中的机械臂模型会运动1角度，可以尝试长按上述键位中的其中一个键来到达某一位姿。
+
 
 
 
