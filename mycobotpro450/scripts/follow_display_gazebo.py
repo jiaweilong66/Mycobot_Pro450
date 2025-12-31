@@ -57,6 +57,31 @@ GRIPPER_JOINT_NAMES = ["gripper_controller"]
 # 同步频率
 SYNC_RATE = 20  # Hz
 
+# 角度缩放系数 (真实角度 * 系数 = Gazebo角度)
+# 系数 > 1: Gazebo转得更多 (用于Gazebo比实际小的情况)
+# 系数 < 1: Gazebo转得更少 (用于Gazebo比实际大的情况)
+# 计算方法: 如果真实60°时Gazebo显示68°，则系数 = 60/68 ≈ 0.88
+#          如果真实60°时Gazebo显示45°，则系数 = 60/45 ≈ 1.33
+ANGLE_SCALE = [
+    1.0,    # joint1 - 无缩放
+    0.85,   # joint2 - Gazebo比实际大8°左右，需要缩小
+    1.12,    # joint3 - Gazebo比实际小很多，重点放大
+    1.35,   # joint4 - Gazebo比实际小15°左右，需要放大
+    0.95,   # joint5 - Gazebo比实际小15°左右，需要放大
+    1.0,    # joint6 - 无缩放
+]
+
+# 角度偏移 (在缩放后再加上偏移，单位：度)
+# 零位正确时偏移应该为0
+ANGLE_OFFSET = [
+    0,  # joint1
+    0,  # joint2
+    0,  # joint3
+    0,  # joint4
+    0,  # joint5
+    0,  # joint6
+]
+
 def is_valid_gripper_angle(angle):
     """检查夹爪角度是否有效"""
     if angle is None:
@@ -161,8 +186,12 @@ def sync_to_gazebo():
                     time.sleep(0.02)
                     continue
             
+            # 应用角度缩放和偏移补偿
+            # 公式: Gazebo角度 = 真实角度 * 缩放系数 + 偏移
+            compensated_angles = [angles[i] * ANGLE_SCALE[i] + ANGLE_OFFSET[i] for i in range(6)]
+            
             # 发布机械臂轨迹到Gazebo
-            arm_angles_rad = [math.radians(a) for a in angles]
+            arm_angles_rad = [math.radians(a) for a in compensated_angles]
             
             arm_traj = JointTrajectory()
             arm_traj.header.stamp = rospy.Time.now()
@@ -210,7 +239,7 @@ def sync_to_gazebo():
             
             pub_gripper_command.publish(gripper_traj)
             
-            rospy.logdebug(f"[同步] 角度: {[round(a,1) for a in angles]}, 夹爪: {mapped_gripper:.1f}°")
+            rospy.logdebug(f"[同步] 原始角度: {[round(a,1) for a in angles]}, 补偿后: {[round(a,1) for a in compensated_angles]}, 夹爪: {mapped_gripper:.1f}°")
             
         except Exception as e:
             rospy.logerr_throttle(5, f"[同步] 同步错误: {e}")
