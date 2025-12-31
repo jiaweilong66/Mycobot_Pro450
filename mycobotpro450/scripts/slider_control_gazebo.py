@@ -875,6 +875,40 @@ def coords_callback(msg):
     
     rospy.logdebug(f"[slider_control] 收到末端坐标: X={msg.x:.1f}mm, Y={msg.y:.1f}mm, Z={msg.z:.1f}mm")
 
+def monitor_height():
+    """实时监控末端高度，如果过低则停止机械臂"""
+    global current_end_effector_coords, coords_lock, mc
+    
+    MIN_SAFE_HEIGHT = 170  # 最小安全高度 170mm
+    last_warning_time = 0
+    WARNING_INTERVAL = 1.0  # 警告间隔(秒)
+    
+    rate = rospy.Rate(20)  # 20Hz 监控频率
+    
+    while not rospy.is_shutdown():
+        try:
+            with coords_lock:
+                if current_end_effector_coords is not None:
+                    end_height = current_end_effector_coords.z
+                    
+                    if end_height < MIN_SAFE_HEIGHT:
+                        current_time = time.time()
+                        if current_time - last_warning_time > WARNING_INTERVAL:
+                            rospy.logwarn(f"[高度监控] 🚨 末端高度过低: {end_height}mm < {MIN_SAFE_HEIGHT}mm")
+                            rospy.logwarn(f"[高度监控] ⚠️  立即停止机械臂！")
+                            last_warning_time = current_time
+                        
+                        # 立即停止机械臂
+                        try:
+                            mc.stop()
+                            rospy.logwarn(f"[高度监控] ✋ 机械臂已停止")
+                        except Exception as e:
+                            rospy.logerr(f"[高度监控] 停止机械臂失败: {e}")
+        except Exception as e:
+            rospy.logerr_throttle(5, f"[高度监控] 监控错误: {e}")
+        
+        rate.sleep()
+
 def callback(msg: JointState):
     """优化的回调函数"""
     global stats
@@ -1084,6 +1118,11 @@ def main():
         executor_thread = threading.Thread(target=command_executor, daemon=True)
         executor_thread.start()
         rospy.loginfo("[slider_control] 🔄 异步命令执行器已启动")
+        
+        # 启动高度监控线程
+        monitor_thread = threading.Thread(target=monitor_height, daemon=True)
+        monitor_thread.start()
+        rospy.loginfo("[slider_control] 📊 实时高度监控已启动")
     
     # 订阅关节状态 (来自slider GUI发布的 /joint_states)
     rospy.Subscriber("/joint_states", JointState, callback, queue_size=1)
