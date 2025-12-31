@@ -65,7 +65,7 @@ SYNC_RATE = 20  # Hz
 ANGLE_SCALE = [
     1.0,    # joint1 - 无缩放
     0.85,   # joint2 - Gazebo比实际大8°左右，需要缩小
-    1.12,    # joint3 - Gazebo比实际小很多，重点放大
+    1.0,    # joint3 - Gazebo比实际小很多，重点放大
     1.35,   # joint4 - Gazebo比实际小15°左右，需要放大
     0.95,   # joint5 - Gazebo比实际小15°左右，需要放大
     1.0,    # joint6 - 无缩放
