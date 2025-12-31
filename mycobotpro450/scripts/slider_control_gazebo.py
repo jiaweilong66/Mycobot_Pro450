@@ -37,6 +37,10 @@ pub_gripper = None
 current_end_effector_coords = None
 coords_lock = threading.Lock()
 
+# 停止标志
+is_stopped = False
+stop_lock = threading.Lock()
+
 # MoveIt碰撞检测相关全局变量
 robot_commander = None
 move_group = None
@@ -812,6 +816,13 @@ def command_executor():
             try:
                 # 执行最新的角度命令
                 if latest_angles_cmd is not None:
+                    # 检查是否被停止
+                    with stop_lock:
+                        if is_stopped:
+                            rospy.logwarn_throttle(2, "[slider_control] ⚠️  机械臂已停止，等待高度恢复安全...")
+                            stats['commands_skipped'] += 1
+                            continue  # 跳过此命令
+                    
                     # 检查末端高度，防止夹爪与地面碰撞
                     try:
                         global current_end_effector_coords, coords_lock
@@ -877,7 +888,7 @@ def coords_callback(msg):
 
 def monitor_height():
     """实时监控末端高度，如果过低则停止机械臂"""
-    global current_end_effector_coords, coords_lock, mc
+    global current_end_effector_coords, coords_lock, mc, mode, pub_arm, is_stopped, stop_lock
     
     MIN_SAFE_HEIGHT = 170  # 最小安全高度 170mm
     last_warning_time = 0
@@ -898,12 +909,43 @@ def monitor_height():
                             rospy.logwarn(f"[高度监控] ⚠️  立即停止机械臂！")
                             last_warning_time = current_time
                         
-                        # 立即停止机械臂
-                        try:
-                            mc.stop()
-                            rospy.logwarn(f"[高度监控] ✋ 机械臂已停止")
-                        except Exception as e:
-                            rospy.logerr(f"[高度监控] 停止机械臂失败: {e}")
+                        # 设置停止标志
+                        with stop_lock:
+                            is_stopped = True
+                        
+                        # 根据模式停止机械臂
+                        if mode == 2:
+                            # 真实机械臂模式
+                            try:
+                                mc.stop()
+                                rospy.logwarn(f"[高度监控] ✋ 真实机械臂已停止")
+                            except Exception as e:
+                                rospy.logerr(f"[高度监控] 停止真实机械臂失败: {e}")
+                        
+                        elif mode == 1:
+                            # Gazebo仿真模式 - 发布空轨迹停止
+                            try:
+                                stop_traj = JointTrajectory()
+                                stop_traj.header.stamp = rospy.Time.now()
+                                stop_traj.joint_names = ARM_JOINTS
+                                
+                                pt = JointTrajectoryPoint()
+                                pt.positions = [0.0] * 6  # 所有关节停止
+                                pt.velocities = [0.0] * 6
+                                pt.accelerations = [0.0] * 6
+                                pt.time_from_start = rospy.Duration(0.0)
+                                stop_traj.points.append(pt)
+                                
+                                pub_arm.publish(stop_traj)
+                                rospy.logwarn(f"[高度监控] ✋ Gazebo机械臂已停止")
+                            except Exception as e:
+                                rospy.logerr(f"[高度监控] 停止Gazebo机械臂失败: {e}")
+                    else:
+                        # 高度安全，清除停止标志
+                        with stop_lock:
+                            if is_stopped:
+                                is_stopped = False
+                                rospy.loginfo(f"[高度监控] ✅ 高度恢复安全 ({end_height}mm >= {MIN_SAFE_HEIGHT}mm)，可以继续执行")
         except Exception as e:
             rospy.logerr_throttle(5, f"[高度监控] 监控错误: {e}")
         
