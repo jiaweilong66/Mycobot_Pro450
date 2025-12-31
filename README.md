@@ -46,18 +46,15 @@ MyCobot_450_m5-Gazebo使用说明
 
 
 ```bash
-
+在src路径下执行
 sudo chmod -R 777 Mycobot_Pro450/mycobotpro450/scripts/follow_display_gazebo.py
 sudo chmod -R 777 Mycobot_Pro450/mycobotpro450/scripts/slider_control_gazebo.py
 sudo chmod -R 777 Mycobot_Pro450/mycobotpro450/scripts/teleop_keyboard_gazebo.py
 
-roscor
+roscore
 
 ```
 
-
-
-确认好端口后，打开一个终端输入以下命令，注意port改成上一步查询到的值
 
 
 
@@ -80,22 +77,6 @@ source devel/setup.bash
 rosrun  mycobotpro450 slider_control_gazebo.py
 
 ```
-
-
-
-同样记得把端口号修改成上一步查询到的端口号。如果运行成功将会看到如下的终端提示：
-
-
-
-```bash
-
-('/dev/ttyACM0', 115200)
-
-spin ...
-
-```
-
-
 
 此时便可通过操控joint\_state\_publisher\_gui的滑块来同时操控Gazebo中机械臂模型的位姿了。
 
@@ -167,25 +148,34 @@ rosrun  mycobotpro450 teleop_keyboard_gazebo.py
 
 ```shell
 
-Mycobot_Pro450 Teleop Keyboard Controller
----------------------------
-Movimg options (control the angle of each joint):
-w: joint2_to_joint1++   s: joint2_to_joint1--
-e: joint3_to_joint2++   d: joint3_to_joint2--
-r: joint4_to_joint3++   f: joint4_to_joint3--
-t: joint5_to_joint4++   g: joint5_to_joint4--
-y: joint6_to_joint5++   h: joint6_to_joint5--
-u: joint6output_to_joint6++ j: joint6output_to_joint6--
-o:open gripper          p:close gripper
-Other:
-1 - Go to home pose
-q - Quit
+╔══════════════════════════════════════════════════════════╗
+║   MyCobot Pro 450 键盘控制器 (Gazebo + 真实机械臂同步)   ║
+╚══════════════════════════════════════════════════════════╝
+
+关节控制 (普通步长: 5.0°, 快速步长: 15.0°):
+  ┌─────────────────────────────────────────────────┐
+  │ w/s: joint1 +/-     W/S: joint1 +/-  (快速)    │
+  │ e/d: joint2 +/-     E/D: joint2 +/-  (快速)    │
+  │ r/f: joint3 +/-     R/F: joint3 +/-  (快速)    │
+  │ t/g: joint4 +/-     T/G: joint4 +/-  (快速)    │
+  │ y/h: joint5 +/-     Y/H: joint5 +/-  (快速)    │
+  │ u/j: joint6 +/-     U/J: joint6 +/-  (快速)    │
+  └─────────────────────────────────────────────────┘
+
+夹爪控制 (Pro力控夹爪 ID=14):
+  ┌─────────────────────────────────────────────────┐
+  │ o: 夹爪完全打开 (100°)                          │
+  │ p: 夹爪完全关闭 (0°)                            │
+  │ [: 夹爪开启 +10°                                │
+  │ ]: 夹爪关闭 -10°                                │
+  └───────────────────
 
 ```
 
 
 
 根据上面的提示我们可以知道如何操控机械臂运动了，这里我设置每点击一下机械臂与Gazebo中的机械臂模型会运动1角度，可以尝试长按上述键位中的其中一个键来到达某一位姿。
+
 
 
 
