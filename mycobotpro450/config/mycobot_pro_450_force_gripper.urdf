@@ -17,7 +17,7 @@
         </visual>
         <collision>
             <geometry>
-                <cylinder length="0.05" radius="0.053" />
+                <cylinder length="0.10" radius="0.10" />
             </geometry>
             <origin xyz="0.0 0.0 0.05" rpy="0 0 1.5708" />
         </collision>
@@ -37,9 +37,9 @@
         </visual>
         <collision>
             <geometry>
-                <cylinder length="0.075" radius="0.033" />
+                <cylinder length="0.095" radius="0.043" />
             </geometry>
-            <origin xyz="0.0 0 -0.05" rpy="0 0 1.5708" />
+            <origin xyz="0.0 0 0.005" rpy="0 0 1.5708" />
         </collision>
         <selfCollide>true</selfCollide>
         <inertial>
