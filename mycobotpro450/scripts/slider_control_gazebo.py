@@ -33,6 +33,10 @@ mode = 2
 pub_arm = None
 pub_gripper = None
 
+# 末端坐标缓存（从coords_broadcaster订阅）
+current_end_effector_coords = None
+coords_lock = threading.Lock()
+
 # MoveIt碰撞检测相关全局变量
 robot_commander = None
 move_group = None
@@ -808,28 +812,26 @@ def command_executor():
             try:
                 # 执行最新的角度命令
                 if latest_angles_cmd is not None:
-                    # 预知新角度会达到的末端高度，防止夹爪与地面碰撞
+                    # 检查末端高度，防止夹爪与地面碰撞
                     try:
-                        new_angles = latest_angles_cmd.data
+                        global current_end_effector_coords, coords_lock
                         
-                        # 使用Pro450的正向运动学API预算新角度的末端坐标
-                        predicted_coords = mc.forward_kinematics(new_angles)
-                        if predicted_coords is not None and len(predicted_coords) >= 3:
-                            predicted_height = predicted_coords[2]  # 第三个数字是高度(mm)
-                            MIN_SAFE_HEIGHT = 170  # 最小安全高度 170mm
-                            
-                            if predicted_height < MIN_SAFE_HEIGHT:
-                                rospy.logwarn(f"[slider_control] 🚨 预知末端高度过低: {predicted_height}mm < {MIN_SAFE_HEIGHT}mm")
-                                rospy.logwarn(f"[slider_control] ⚠️  夹爪会与地面发生碰撞！拒绝执行此命令")
-                                rospy.logwarn(f"[slider_control] 📍 新角度: {[round(a,1) for a in new_angles]}")
-                                stats['commands_skipped'] += 1
-                                continue  # 跳过此命令，不发送到机械臂
+                        with coords_lock:
+                            if current_end_effector_coords is not None:
+                                end_height = current_end_effector_coords.z  # 高度(mm)
+                                MIN_SAFE_HEIGHT = 170  # 最小安全高度 170mm
+                                
+                                if end_height < MIN_SAFE_HEIGHT:
+                                    rospy.logwarn(f"[slider_control] 🚨 末端高度过低: {end_height}mm < {MIN_SAFE_HEIGHT}mm")
+                                    rospy.logwarn(f"[slider_control] ⚠️  夹爪会与地面发生碰撞！拒绝执行此命令")
+                                    stats['commands_skipped'] += 1
+                                    continue  # 跳过此命令，不发送到机械臂
+                                else:
+                                    rospy.logdebug(f"[slider_control] 末端高度: {end_height}mm (安全)")
                             else:
-                                rospy.logdebug(f"[slider_control] 预知末端高度: {predicted_height}mm (安全)")
-                        else:
-                            rospy.logwarn(f"[slider_control] 正向运动学计算失败，继续执行")
+                                rospy.logwarn_throttle(5, "[slider_control] 未收到末端坐标数据，继续执行")
                     except Exception as e:
-                        rospy.logwarn(f"[slider_control] 预知高度异常: {e}，继续执行")
+                        rospy.logwarn(f"[slider_control] 高度检测异常: {e}，继续执行")
                     
                     rospy.loginfo(f"[slider_control]  发送角度到Pro450: {[round(a,1) for a in latest_angles_cmd.data]}")
                     mc.send_angles(latest_angles_cmd.data, 10)  # 提高速度到50
@@ -863,6 +865,15 @@ def command_executor():
         except Exception as e:
             rospy.logerr(f"[slider_control] 命令执行器错误: {e}")
             is_executing = False
+
+def coords_callback(msg):
+    """末端坐标回调函数"""
+    global current_end_effector_coords, coords_lock
+    
+    with coords_lock:
+        current_end_effector_coords = msg
+    
+    rospy.logdebug(f"[slider_control] 收到末端坐标: X={msg.x:.1f}mm, Y={msg.y:.1f}mm, Z={msg.z:.1f}mm")
 
 def callback(msg: JointState):
     """优化的回调函数"""
@@ -935,7 +946,6 @@ def publish_to_gazebo(arm_deg, grip_deg):
         pt.time_from_start = rospy.Duration(0.2)
         traj.points = [pt]
         pub_arm.publish(traj)
-        
         # 夹爪轨迹
         traj_g = JointTrajectory()
         traj_g.header.stamp = rospy.Time.now()
@@ -1078,6 +1088,11 @@ def main():
     # 订阅关节状态 (来自slider GUI发布的 /joint_states)
     rospy.Subscriber("/joint_states", JointState, callback, queue_size=1)
     rospy.loginfo("[slider_control]  已订阅 /joint_states 话题 (等待滑块GUI输入)")
+    
+    # 订阅末端坐标 (来自coords_broadcaster发布的 /pro450/end_effector_coords)
+    from geometry_msgs.msg import Point
+    rospy.Subscriber("/pro450/end_effector_coords", Point, coords_callback, queue_size=1)
+    rospy.loginfo("[slider_control]  已订阅 /pro450/end_effector_coords 话题 (末端坐标广播)")
     
     rospy.loginfo(f"[slider_control]  {mode_name}控制器启动成功，等待滑块输入...")
     rospy.loginfo("[slider_control]  Tips:")
