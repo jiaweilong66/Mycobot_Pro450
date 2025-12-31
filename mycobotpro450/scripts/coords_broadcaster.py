@@ -20,7 +20,7 @@ mc = None
 pub_coords = None
 
 # 广播频率
-BROADCAST_RATE = 20  # Hz
+BROADCAST_RATE = 50  # Hz
 
 def initialize_pro450():
     """初始化Pro450网络连接"""
@@ -117,3 +117,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
