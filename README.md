@@ -6,7 +6,7 @@
 
 要使用此包，需先安装[Python api](https://github.com/elephantrobotics/pymycobot.git)库。
 
-夹爪的使用：请将夹爪的模式切换为moblus(enable)模式
+夹爪的使用：请将夹爪的模式切换为modbus(enable)模式
 
 ```bash
 
@@ -183,6 +183,7 @@ rosrun  mycobotpro450 teleop_keyboard_gazebo.py
 
 
 根据上面的提示我们可以知道如何操控机械臂运动了，这里我设置每点击一下机械臂与Gazebo中的机械臂模型会运动1角度，可以尝试长按上述键位中的其中一个键来到达某一位姿。
+
 
 
 
